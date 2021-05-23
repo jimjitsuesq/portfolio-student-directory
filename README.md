@@ -1,2 +1,2 @@
-# react-photo-gallery
+# student-directory
  
