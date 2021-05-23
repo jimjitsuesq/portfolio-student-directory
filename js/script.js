@@ -17,7 +17,6 @@ const studentArray = [];
 let splitArray = [];
 let numberOfPages = 0;
 let currentPage = 1;
-const paginationArray = [];
 
 function CreateLI (arr) {
    for (let i = 0; i < arr.length; i++) {
@@ -34,7 +33,6 @@ function CreateLI (arr) {
    pic.className = "avatar";
    pic.src = `${arr[i].picture.large}`;
    pic.alt = 'Profile Picture';
-   //pic.innerHTML = `class = "avatar" src="${arr[i].picture.large}"`;
    SDdiv.appendChild(pic);
    name.innerHTML = `${arr[i].name.first} ${arr[i].name.last}`;
    SDdiv.appendChild(name);
@@ -49,19 +47,20 @@ function CreateLI (arr) {
    }
 }
 
-function getNumberOfPages (arr) {
-   numberOfPages = Math.ceil(arr.length/9);
-}
+/*
+Create the `showPage` function
+This function will create and insert/append the elements needed to display a "page" of nine students
+*/
 
-function sliceArray (arr, num) {
+function sliceArray (arr) {
    splitArray = [];
-   const slice = arr.slice((num - 1) * 9, ((num-1) * 9) + 9);
+   const slice = arr.slice((currentPage - 1) * 9, ((currentPage-1) * 9) + 9);
    for (let i = 0; i < slice.length; i++) {
    splitArray.push(slice[i]);
    }
 }
 
-function publishArray (arr, num) {
+function showPage (arr) {
    ul.innerHTML = '';
    for (let i = 0; i < arr.length; i++) {
       let li = arr[i];
@@ -70,45 +69,100 @@ function publishArray (arr, num) {
 }
 
 /*
-Create the `showPage` function
-This function will create and insert/append the elements needed to display a "page" of nine students
-*/
-
-
-/*
 Create the `addPagination` function
 This function will create and insert/append the elements needed for the pagination buttons
 */
 
-const pageLinks = document.querySelector('.link-list')
+let pageLinks = document.querySelector('.link-list');
 
-function createPaginationLinks(num1) {
+function getNumberOfPages (arr) {
+   numberOfPages = Math.ceil(arr.length/9);
+}
+
+function createPaginationLinks(num1, arr1) {
+   pageLinks.innerHTML = '';
    for (let i = 0; i < num1; i++) {
       let li = document.createElement('li');
       let button = document.createElement('button');
       button.innerHTML = i+1;
       button.id = i+1;
+      let buttonID = parseInt(button.id);
       button.addEventListener('click', (e) => {
-         currentPage = e.target.id;
-         allButtons = document.querySelectorAll('button');
+         currentPage = +e.target.id;
+         allButtons = pageLinks.getElementsByTagName('BUTTON');
          for ( i = 0; i < allButtons.length; i++) {
-            allButtons[i].className = 'notActive';
+            allButtons[i].classList.remove('active');
          }
-         sliceArray(studentArray, currentPage);
-         publishArray(splitArray, currentPage);
-         if(+button.id == currentPage) {
+         sliceArray(arr1);
+         showPage(splitArray);
+         if(buttonID == currentPage) {
             button.className = "active";
       }
    })
       li.appendChild(button);
       pageLinks.appendChild(li);
+      if(buttonID == currentPage) {
+         button.className = "active";
+   }
+   }
+   
+}
+
+// Search Bar
+
+const header = document.querySelector('.header');
+const searchBox = document.createElement('label');
+header.appendChild(searchBox);
+searchBox.for = 'search';
+searchBox.className = "student-search";
+searchBox.innerHTML = `<span>Search by name</span>
+   <input id="search" placeholder="Search by name...">
+   <button type="button" id="search button"><img src="img/icn-search.svg" alt="Search icon"></button>`
+
+// Search Function
+
+const search = document.getElementById('search');
+const submit = document.getElementById('search button');
+let searchArray = [];
+
+function searchFunction (item, names) {
+   currentPage = 1;
+   searchArray = [];
+   for (let i = 0; i<names.length; i++) {
+   if(item.value.length !== 0 && names[i].firstElementChild.firstElementChild.nextElementSibling.textContent.toLowerCase().includes(item.value.toLowerCase())){
+      searchArray.push(names[i]);
+   }
    }
 }
+function noSearchResults () {
+   if (searchArray.length === 0 && splitArray.length === 0) {
+      ul.insertAdjacentHTML("afterbegin", `<span class = "no results">No Results found.</span>`)
+   }
+}
+
+submit.addEventListener('click', (e) => {
+   e.preventDefault();
+   searchFunction(search, studentArray);
+   sliceArray(searchArray);
+   showPage(splitArray);
+   getNumberOfPages(searchArray);
+   createPaginationLinks(numberOfPages, searchArray, splitArray);
+   noSearchResults();
+});
+
+search.addEventListener('keyup', () => {
+   searchFunction(search, studentArray);
+   sliceArray(searchArray);
+   showPage(splitArray);
+   getNumberOfPages(searchArray);
+   createPaginationLinks(numberOfPages, searchArray, splitArray);
+   noSearchResults();
+})
 
 // Call functions
 
 CreateLI(data);
 getNumberOfPages(studentArray);
 sliceArray(studentArray, currentPage);
-publishArray(splitArray, currentPage);
-createPaginationLinks(numberOfPages);
+showPage(splitArray, currentPage);
+createPaginationLinks(numberOfPages, studentArray, splitArray);
